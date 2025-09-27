@@ -1,0 +1,28 @@
+# Visual Studio stuff
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build output
+Debug/
+Release/
+x64/
+x86/
+*.obj
+*.idb
+*.pdb
+*.tlog
+*.log
+*.cache
+*.ilk
+
+# Binaries
+*.exe
+*.dll
+*.lib
+
+# Other IDE/db files
+*.opendb
+*.VC.db
