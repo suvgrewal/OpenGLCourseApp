@@ -1,10 +1,31 @@
 #include <stdio.h>
+#include <string.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 // Window dimensions
 const GLint WIDTH = 800, HEIGHT = 600; // GLint type is typedef for OpenGL
+
+GLuint VAO, VBO, shader; // Vertex Array Object, Vertex Buffer Object
+
+void CreateTriangle()
+{
+	GLfloat vertices[] = {
+		0.0f,  0.5f, 0.0f, // Vertex 1 (X, Y)
+		0.5f, -0.5f, 0.0f, // Vertex 2 (X, Y)
+	   -0.5f, -0.5f, 0.0f  // Vertex 3 (X, Y)
+	};
+	glGenVertexArrays(1, &VAO); // Generate 1 vertex array object
+	glBindVertexArray(VAO);     // Bind the vertex array object
+	glGenBuffers(1, &VBO);                      // Generate 1 vertex buffer object
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);         // Bind the vertex buffer object
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // Copy the vertices to the buffer
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0); // Set the vertex attribute pointer
+	glEnableVertexAttribArray(0); // Enable the vertex attribute array
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO
+	glBindVertexArray(0);             // Unbind the VAO
+}
 
 int main()
 {
