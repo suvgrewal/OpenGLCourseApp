@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#include <cmath>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+// #include <glm/glm.hpp>
+// #include <glm/gtc/matrix_transform.hpp>
+// #include <glm/gtc/type_ptr.hpp>
 
 // Window dimensions
 const GLint WIDTH = 800, HEIGHT = 600; // GLint type is typedef for OpenGL
@@ -11,6 +16,14 @@ const GLint WIDTH = 800, HEIGHT = 600; // GLint type is typedef for OpenGL
 GLuint VAO;
 GLuint VBO;
 GLuint shader;
+GLuint uniformXMove;
+
+enum class Direction { LEFT, RIGHT };
+
+Direction direction = Direction::RIGHT;  // tutorial used bool with true = right, false = left
+float triOffset = 0.0f;
+float triMaxOffset = 0.7f;
+float triIncrement = 0.0005f;
 
 const int POSITION_COMPONENTS = 3; // x, y, z
 const int TRIANGLE_VERTEX_COUNT = 3; // triangle has 3 vertices
@@ -21,9 +34,11 @@ static const char* vShader = "                                         \n\
                                                                        \n\
 layout (location = 0) in vec3 pos;                                     \n\
                                                                        \n\
+uniform float xMove;                                                   \n\
+                                                                       \n\
 void main()                                                            \n\
 {                                                                      \n\
-    gl_Position = vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);                      \n\
+    gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, pos.z, 1.0);          \n\
 }                                                                      \n\
 ";
 
@@ -142,6 +157,9 @@ void CompileShaders()
 		printf("Error validating program: '%s'\n", eLog);
 		return;
 	}
+
+	uniformXMove = glGetUniformLocation(shader, "xMove"); // Get the location of the uniform variable "xMove" in the shader program
+
 }
 
 int main()
@@ -204,13 +222,31 @@ int main()
 		// Get and handle user input events
 		glfwPollEvents(); // Poll events from user & process them
 
+		if (direction == Direction::RIGHT)
+		{
+			triOffset += triIncrement;
+		}
+		else
+		{
+			triOffset -= triIncrement;
+		}
+
+		if (abs(triOffset) >= triMaxOffset)
+		{
+			// swap directions
+			direction = (direction == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
+		}
+
 		// Clear window
 		glClearColor(1.0f, 0.0f, 0.0f, 1.0f); // Set clear color to red
 		glClear(GL_COLOR_BUFFER_BIT);     
 		
-		glUseProgram(shader); // clear bits
-		glBindVertexArray(VAO); // Bind the VAO (the triangle)
+		glUseProgram(shader); // clear bi
+		
+		// update uniform value by setting to triOffset
+		glUniform1f(uniformXMove, triOffset);
 
+		glBindVertexArray(VAO); // Bind the VAO (the triangle)
 		glDrawArrays(GL_TRIANGLES, first, count);
 		glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO
 		glUseProgram(0);
