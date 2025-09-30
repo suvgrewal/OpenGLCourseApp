@@ -4,11 +4,14 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/mat4x4.hpp>
 
-// #include <glm/glm.hpp>
-// #include <glm/gtc/matrix_transform.hpp>
-// #include <glm/gtc/type_ptr.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Window dimensions
 const GLint WIDTH = 800, HEIGHT = 600; // GLint type is typedef for OpenGL
@@ -17,7 +20,7 @@ const GLint WIDTH = 800, HEIGHT = 600; // GLint type is typedef for OpenGL
 GLuint VAO;
 GLuint VBO;
 GLuint shader;
-GLuint uniformXMove;
+GLuint uniformModel;
 
 enum class Direction { LEFT, RIGHT };
 
@@ -35,11 +38,11 @@ static const char* vShader = "                                         \n\
                                                                        \n\
 layout (location = 0) in vec3 pos;                                     \n\
                                                                        \n\
-uniform float xMove;                                                   \n\
+uniform mat4 model;                                                   \n\
                                                                        \n\
 void main()                                                            \n\
 {                                                                      \n\
-    gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, pos.z, 1.0);          \n\
+    gl_Position = model * vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);          \n\
 }                                                                      \n\
 ";
 
@@ -159,7 +162,7 @@ void CompileShaders()
 		return;
 	}
 
-	uniformXMove = glGetUniformLocation(shader, "xMove"); // Get the location of the uniform variable "xMove" in the shader program
+	uniformModel = glGetUniformLocation(shader, "model"); // Get the location of the uniform variable "xMove" in the shader program
 
 }
 
@@ -217,6 +220,9 @@ int main()
 	const int first = 0;
 	const int count = 3;
 
+	const GLint MATRIX_COUNT = 1;
+	GLboolean TO_TRANSPOSE = GL_FALSE; // Whether to transpose the matrix as the values are loaded into the uniform variable
+
 	// Loop until window closed
 	while (!glfwWindowShouldClose(mainWindow))
 	{
@@ -240,12 +246,15 @@ int main()
 
 		// Clear window
 		glClearColor(1.0f, 0.0f, 0.0f, 1.0f); // Set clear color to red
-		glClear(GL_COLOR_BUFFER_BIT);     
-		
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		glUseProgram(shader); // clear bi
-		
+
+		glm::mat4 model{ 1.0f }; // Create identity matrix by default
+		model = glm::translate(model, glm::vec3{ triOffset, triOffset, 0.0f });
+
 		// update uniform value by setting to triOffset
-		glUniform1f(uniformXMove, triOffset);
+		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
 
 		glBindVertexArray(VAO); // Bind the VAO (the triangle)
 		glDrawArrays(GL_TRIANGLES, first, count);
