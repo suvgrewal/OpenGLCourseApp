@@ -1,3 +1,1 @@
-﻿  main.cpp
-C:\Projects\OpenGLCourseApp\main.cpp(105,24): warning C4267: '=': conversion from 'size_t' to 'GLint', possible loss of data
-  OpenGLCourseApp.vcxproj -> C:\Projects\OpenGLCourseApp\x64\Debug\OpenGLCourseApp.exe
+﻿  OpenGLCourseApp.vcxproj -> C:\Projects\OpenGLCourseApp\x64\Debug\OpenGLCourseApp.exe

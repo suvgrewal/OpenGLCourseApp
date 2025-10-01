@@ -14,23 +14,36 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Window dimensions
-const GLint WIDTH = 800, HEIGHT = 600; // GLint type is typedef for OpenGL
+const GLint WIDTH = 800, HEIGHT = 600;
 
 // Vertex Array Object, Vertex Buffer Object and Shader
 GLuint VAO;
 GLuint VBO;
+GLuint IBO;
 GLuint shader;
 GLuint uniformModel;
 
 enum class Direction { LEFT, RIGHT };
 
-Direction direction = Direction::RIGHT;  // tutorial used bool with true = right, false = left
+Direction direction = Direction::RIGHT;
 float triOffset = 0.0f;
-float triMaxOffset = 0.7f;
-float triIncrement = 0.0005f;
+float triMaxOffset = 0.5f;
+float triIncrement = 0.005f;
 
-const int POSITION_COMPONENTS = 3; // x, y, z
-const int TRIANGLE_VERTEX_COUNT = 3; // triangle has 3 vertices
+const int POSITION_COMPONENTS = 3;    // x, y, z
+const int TRIANGLE_VERTEX_COUNT = 4;  // triangle has 3 vertices
+float currAngle = 0.0f;         // starting angle
+const float degreeToRotateIncrement = 0.25f;   // degrees to rotate per frame
+
+enum class SizeDirection { INCREASING, DECREASING };
+
+SizeDirection sizeDirection = SizeDirection::INCREASING;
+
+float currSize = 0.4f;
+float maxSize = 0.8f;
+float minSize = 0.1f;
+float sizeIncrement = 0.005f;
+bool changeSize = false;
 
 // Vertex Shader
 static const char* vShader = "                                         \n\
@@ -38,36 +51,53 @@ static const char* vShader = "                                         \n\
                                                                        \n\
 layout (location = 0) in vec3 pos;                                     \n\
                                                                        \n\
-uniform mat4 model;                                                   \n\
+out vec4 vColor;                                                       \n\
+                                                                       \n\
+uniform mat4 model;                                                    \n\
                                                                        \n\
 void main()                                                            \n\
 {                                                                      \n\
-    gl_Position = model * vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);          \n\
+    gl_Position = model * vec4(pos.x, pos.y, pos.z, 1.0);              \n\
+    vColor = vec4(clamp(pos, 0.0f, 1.0f), 1.0);                        \n\
 }                                                                      \n\
 ";
 
 static const char* fShader = "                                         \n\
 #version 330                                                           \n\
 																	   \n\
+in vec4 vColor;                                                        \n\
+                                                                       \n\
 out vec4 color;                                                        \n\
 																	   \n\
 void main()                                                            \n\
 {                                                                      \n\
-	color = vec4(0.0, 0.0, 0.0, 1.0);                                  \n\
+	color = vColor;                                                    \n\
 }                                                                      \n\
 ";
 
 void CreateTriangle()
 {
+	unsigned int indices[] = {
+		0, 3, 1,
+		1, 3, 2,
+		2, 3, 0,
+		0, 1, 2
+	};
+
 	GLfloat vertices[TRIANGLE_VERTEX_COUNT * POSITION_COMPONENTS] = {
 		-1.0f, -1.0f, 0.0f, // Bottom left
-		 1.0f, -1.0f, 0.0f, // Bottom right
-		 0.0f,  1.0f, 0.0f  // Top middle
+		0.0f, -1.0f, 1.0f,  // Top right in background
+		1.0f, -1.0f, 0.0f,  // Bottom right
+		0.0f,  1.0f, 0.0f   // Top middle
 	};
 
 	GLsizei num_tris = 1;
 	glGenVertexArrays(num_tris, &VAO); // Generate 1 vertex array object
 	glBindVertexArray(VAO);    // Bind the vertex array object
+
+	glGenBuffers(num_tris, &IBO); // Generate 1 index buffer object
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO); // Bind the index buffer object
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); // Set buffer data
 
 	glGenBuffers(num_tris, &VBO); // Generate 1 vertex buffer object
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the vertex buffer object
@@ -82,10 +112,10 @@ void CreateTriangle()
 
 	glVertexAttribPointer(index, vertexSize, type, isNormalized, stride, offset); // Set vertex attribute pointer
 	glEnableVertexAttribArray(index); // Enable the vertex attribute array
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO (the call to glVertexAttribPointer registered VBO as the currently bound GL_ARRAY_BUFFER)
 	
 	glBindVertexArray(0); // Unbind the VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO (the call to glVertexAttribPointer registered VBO as the currently bound GL_ARRAY_BUFFER)
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind the IBO (the call to glVertexAttribPointer registered IBO as the currently bound GL_ELEMENT_ARRAY_BUFFER)
 }
 
 void AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)
@@ -212,6 +242,8 @@ int main()
 		return 1;
 	}
 
+	glEnable(GL_DEPTH_TEST); // Enable depth testing
+
 	glViewport(0, 0, bufferWidth, bufferHeight); // Set the viewport size (0,0) to the size of the window
 	
 	CreateTriangle(); // Create triangle
@@ -244,25 +276,55 @@ int main()
 			direction = (direction == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
 		}
 
+		currAngle += degreeToRotateIncrement;
+		if (currAngle >= 360.0f)
+		{
+			currAngle -= 360.0f;
+		}
+
+		if (changeSize)
+		{
+			if (sizeDirection == SizeDirection::INCREASING)
+			{
+				currSize += sizeIncrement;
+			}
+			else
+			{
+				currSize -= sizeIncrement;
+			}
+
+			if (currSize >= maxSize || currSize <= minSize)
+			{
+				sizeDirection = (sizeDirection == SizeDirection::INCREASING) ? (sizeDirection = SizeDirection::DECREASING) : (SizeDirection::INCREASING);
+			}
+		}
+
 		// Clear window
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f); // Set clear color to red
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color to red
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glUseProgram(shader); // clear bi
 
 		glm::mat4 model{ 1.0f }; // Create identity matrix by default
-		model = glm::translate(model, glm::vec3{ triOffset, triOffset, 0.0f });
+		model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 0.0f, 1.0f, 0.0f });
+		//model = glm::translate(model, glm::vec3{ triOffset, triOffset, 0.0f });
+		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
 
 		// update uniform value by setting to triOffset
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
 
-		glBindVertexArray(VAO); // Bind the VAO (the triangle)
-		glDrawArrays(GL_TRIANGLES, first, count);
-		glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO
+		glBindVertexArray(VAO); // Bind the VAO (the t	riangle)
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO); // Bind the IBO
+
+		glDrawElements(GL_TRIANGLES, TRIANGLE_VERTEX_COUNT * POSITION_COMPONENTS, GL_UNSIGNED_INT, 0); // Draw the triangle
+
+		glBindVertexArray(0); // Unbind the VAO
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind the IBO
+
 		glUseProgram(0);
 
 		glfwSwapBuffers(mainWindow); // Swap the front and back buffers
-	}
+	}	
 
 	// Cleanup
 	return 0;
