@@ -22,6 +22,7 @@ GLuint VBO;
 GLuint IBO;
 GLuint shader;
 GLuint uniformModel;
+GLuint uniformProjection;
 
 enum class Direction { LEFT, RIGHT };
 
@@ -54,10 +55,11 @@ layout (location = 0) in vec3 pos;                                     \n\
 out vec4 vColor;                                                       \n\
                                                                        \n\
 uniform mat4 model;                                                    \n\
+uniform mat4 projection;                                               \n\
                                                                        \n\
 void main()                                                            \n\
 {                                                                      \n\
-    gl_Position = model * vec4(pos.x, pos.y, pos.z, 1.0);              \n\
+    gl_Position = projection * model * vec4(pos.x, pos.y, pos.z, 1.0); \n\
     vColor = vec4(clamp(pos, 0.0f, 1.0f), 1.0);                        \n\
 }                                                                      \n\
 ";
@@ -192,8 +194,8 @@ void CompileShaders()
 		return;
 	}
 
-	uniformModel = glGetUniformLocation(shader, "model"); // Get the location of the uniform variable "xMove" in the shader program
-
+	uniformModel = glGetUniformLocation(shader, "model");           // Get the location of the uniform variable "model" in the shader program
+	uniformProjection = glGetUniformLocation(shader, "projection"); // Get the location of the uniform variable "projection" in the shader program
 }
 
 int main()
@@ -249,6 +251,19 @@ int main()
 	CreateTriangle(); // Create triangle
 	CompileShaders(); // Compile and link shaders
 
+	const float fovY = glm::radians(30.0f);  // FOV in Y direction
+	const GLfloat aspectRatio = (GLfloat) (bufferWidth /bufferHeight); // width / height
+	const float zNear = 0.1f;  // Near clipping plane
+	const float zFar = 100.0f; // Far clipping plane
+
+	const float xLoc = 0.0f;
+	const float yLoc = 0.0f;
+	const float zLoc = -2.5f;
+
+	glm::mat4 projection = glm::perspective(fovY, aspectRatio, zNear, zFar); // Create a perspective projection matrix
+
+	//glm::mat4 projection = glm::perspective(glm::radians(45.0f), (GLfloat)bufferWidth / (GLfloat)bufferHeight, 0.1f, 100.0f);
+
 	const int first = 0;
 	const int count = 3;
 
@@ -303,15 +318,17 @@ int main()
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color to red
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glUseProgram(shader); // clear bi
+		glUseProgram(shader);
 
 		glm::mat4 model{ 1.0f }; // Create identity matrix by default
-		model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 0.0f, 1.0f, 0.0f });
-		//model = glm::translate(model, glm::vec3{ triOffset, triOffset, 0.0f });
+
+		model = glm::translate(model, glm::vec3{ xLoc + triOffset, yLoc + triOffset, zLoc + triOffset });
+		model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 1.0f, 1.0f, 1.0f });
 		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
 
 		// update uniform value by setting to triOffset
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
+		glUniformMatrix4fv(uniformProjection, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(projection));
 
 		glBindVertexArray(VAO); // Bind the VAO (the t	riangle)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO); // Bind the IBO
