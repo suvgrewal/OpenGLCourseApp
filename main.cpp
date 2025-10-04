@@ -22,7 +22,7 @@
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
 
-GLWindow mainWindow = GLWindow(WIDTH, HEIGHT);
+GLWindow mainWindow;
 
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
@@ -88,7 +88,7 @@ void CreateShaders()
 
 int main()
 {
-	//mainWindow = GLWindow(WIDTH, HEIGHT);
+	mainWindow = GLWindow(WIDTH, HEIGHT);
 
 	mainWindow.Initialize();
 
