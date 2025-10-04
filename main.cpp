@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <cmath>
+#include <vector>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -13,16 +14,18 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// Window dimensions
-const GLint WIDTH = 800, HEIGHT = 600;
+#include "GLWindow.h"
+#include "Mesh.h"
+#include "Shader.h"
 
-// Vertex Array Object, Vertex Buffer Object and Shader
-GLuint VAO;
-GLuint VBO;
-GLuint IBO;
-GLuint shader;
-GLuint uniformModel;
-GLuint uniformProjection;
+// Window dimensions
+const GLint WIDTH = 800;
+const GLint HEIGHT = 600;
+
+GLWindow mainWindow = GLWindow(WIDTH, HEIGHT);
+
+std::vector<Mesh*> meshList;
+std::vector<Shader*> shaderList;
 
 enum class Direction { LEFT, RIGHT };
 
@@ -31,10 +34,10 @@ float triOffset = 0.0f;
 float triMaxOffset = 0.5f;
 float triIncrement = 0.005f;
 
-const int POSITION_COMPONENTS = 3;    // x, y, z
-const int TRIANGLE_VERTEX_COUNT = 4;  // triangle has 3 vertices
-float currAngle = 0.0f;         // starting angle
-const float degreeToRotateIncrement = 0.25f;   // degrees to rotate per frame
+const int POSITION_COMPONENTS = 4;
+const int TRIANGLE_VERTEX_COUNT = 3;
+float currAngle = 0.0f;
+const float degreeToRotateIncrement = 0.25f;
 
 enum class SizeDirection { INCREASING, DECREASING };
 
@@ -47,37 +50,11 @@ float sizeIncrement = 0.005f;
 bool changeSize = false;
 
 // Vertex Shader
-static const char* vShader = "                                         \n\
-#version 330                                                           \n\
-                                                                       \n\
-layout (location = 0) in vec3 pos;                                     \n\
-                                                                       \n\
-out vec4 vColor;                                                       \n\
-                                                                       \n\
-uniform mat4 model;                                                    \n\
-uniform mat4 projection;                                               \n\
-                                                                       \n\
-void main()                                                            \n\
-{                                                                      \n\
-    gl_Position = projection * model * vec4(pos.x, pos.y, pos.z, 1.0); \n\
-    vColor = vec4(clamp(pos, 0.0f, 1.0f), 1.0);                        \n\
-}                                                                      \n\
-";
+static const char* vShader = "Shaders/shader.vert";
 
-static const char* fShader = "                                         \n\
-#version 330                                                           \n\
-																	   \n\
-in vec4 vColor;                                                        \n\
-                                                                       \n\
-out vec4 color;                                                        \n\
-																	   \n\
-void main()                                                            \n\
-{                                                                      \n\
-	color = vColor;                                                    \n\
-}                                                                      \n\
-";
+static const char* fShader = "Shaders/shader.frag";
 
-void CreateTriangle()
+void CreateObjects()
 {
 	unsigned int indices[] = {
 		0, 3, 1,
@@ -93,172 +70,42 @@ void CreateTriangle()
 		0.0f,  1.0f, 0.0f   // Top middle
 	};
 
-	GLsizei num_tris = 1;
-	glGenVertexArrays(num_tris, &VAO); // Generate 1 vertex array object
-	glBindVertexArray(VAO);    // Bind the vertex array object
+	Mesh* obj1 = new Mesh();
+	obj1->CreateMesh(vertices, indices, sizeof(vertices) / sizeof(vertices[0]), sizeof(indices) / sizeof(indices[0]));
+	meshList.push_back(obj1);
 
-	glGenBuffers(num_tris, &IBO); // Generate 1 index buffer object
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO); // Bind the index buffer object
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); // Set buffer data
-
-	glGenBuffers(num_tris, &VBO); // Generate 1 vertex buffer object
-	glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the vertex buffer object
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // Set buffer data
-
-	GLuint index = 0; // Vertex attribute index
-	GLint vertexSize = 3; // Number of components per vertex attribute (e.g. , x, y, z for 3D position or vec3)
-	GLenum type = GL_FLOAT; // Data type of each component
-	GLboolean isNormalized = GL_FALSE; // Whether fixed-point data values should be normalized
-	GLsizei stride = 0; // Byte offset between consecutive vertex attributes
-	void* offset = (void*)0; // Offset of the first component
-
-	glVertexAttribPointer(index, vertexSize, type, isNormalized, stride, offset); // Set vertex attribute pointer
-	glEnableVertexAttribArray(index); // Enable the vertex attribute array
-	
-	glBindVertexArray(0); // Unbind the VAO
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO (the call to glVertexAttribPointer registered VBO as the currently bound GL_ARRAY_BUFFER)
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind the IBO (the call to glVertexAttribPointer registered IBO as the currently bound GL_ELEMENT_ARRAY_BUFFER)
+	Mesh* obj2 = new Mesh();
+	obj2->CreateMesh(vertices, indices, sizeof(vertices) / sizeof(vertices[0]), sizeof(indices) / sizeof(indices[0]));
+	meshList.push_back(obj2);
 }
 
-void AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)
+void CreateShaders()
 {
-	GLuint theShader = glCreateShader(shaderType); // Create shader object
-
-	if (!theShader) // If shader creation failed
-	{
-		printf("Error creating shader type %d\n", shaderType);
-		return;
-	}
-
-	const GLchar* theCode[1]; // Hold shaderCode in array of pointers
-	theCode[0] = shaderCode;  // Pointer to the shader code string
-
-	GLint codeLength[1];      // Array of lengths of the strings
-	codeLength[0] = strlen(shaderCode); // Length of the shader code string
-	
-	glShaderSource(theShader, 1, theCode, codeLength); // Set the source code in the shader object
-	glCompileShader(theShader); // Compile the shader
-
-	const int logLength = 1024;
-	GLint result = 0;               // Compilation result
-	GLchar eLog[logLength] = { 0 };      // Error log buffer
-	GLsizei* infoLogLength = NULL;
-
-	glGetShaderiv(theShader, GL_COMPILE_STATUS, &result); // Get compilation status
-	
-	if (!result)  // Compilation failed
-	{
-		glGetShaderInfoLog(theShader, sizeof(eLog), infoLogLength, eLog);
-		printf("Error compiling the %d shader: '%s'\n", shaderType, eLog);
-		return;
-	}
-
-
-	glAttachShader(theProgram, theShader); // Attach the compiled shader to the program
-}
-void CompileShaders()
-{
-	shader = glCreateProgram(); // Create shader program
-
-	if (!shader)  // If shader program creation failed
-	{
-		printf("Shader program creation failed!\n");
-		return;
-	}
-
-	AddShader(shader, vShader, GL_VERTEX_SHADER);    // Add vertex shader
-	AddShader(shader, fShader, GL_FRAGMENT_SHADER);  // Add fragment shader
-
-	const int logLength = 1024;
-	GLint result = 0;               // Compilation result
-	GLchar eLog[logLength] = { 0 }; // Error log buffer
-	GLsizei* infoLogLength = NULL;
-
-	glLinkProgram(shader); // Link the shader program; create executables on graphics card to link program together
-	glGetProgramiv(shader, GL_LINK_STATUS, &result); // Get link status
-
-	if (!result)  // Linking failed
-	{
-		glGetProgramInfoLog(shader, logLength, infoLogLength, eLog);
-		printf("Error linking program: '%s'\n", eLog);
-		return;
-	}
-
-	glValidateProgram(shader); // Validate the shader program
-	glGetProgramiv(shader, GL_VALIDATE_STATUS, &result); // Get validation status
-
-	if (!result)
-	{
-		glGetProgramInfoLog(shader, logLength, infoLogLength, eLog);
-		printf("Error validating program: '%s'\n", eLog);
-		return;
-	}
-
-	uniformModel = glGetUniformLocation(shader, "model");           // Get the location of the uniform variable "model" in the shader program
-	uniformProjection = glGetUniformLocation(shader, "projection"); // Get the location of the uniform variable "projection" in the shader program
+	Shader* shader1 = new Shader();
+	shader1->CreateFromFiles(vShader, fShader);
+	shaderList.push_back(shader1);
 }
 
 int main()
 {
-	// Initialize GLFW
-	if (!glfwInit())
-	{
-		printf("GLFW initialization failed!\n");
-		glfwTerminate(); // terminate GLFW if initialization fails
-		return 1;        // return with standard error code
-	}
+	//mainWindow = GLWindow(WIDTH, HEIGHT);
 
-	// Setup GLFW window properties
-	// OpenGL version
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // Set major version to 3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // Set minor version to 4
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Set profile to core
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Allow forward compatibility
-	
-	GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Test Window", NULL, NULL);
-	// Create a windowed mode window and its OpenGL context
+	mainWindow.Initialize();
 
-	if (!mainWindow) // if window not created successfully
-	{
-		printf("GLFW window creation failed");
-		glfwTerminate();
-		return 1;
-	}
+	CreateObjects(); // Create triangle
+	CreateShaders(); // Compile and link shaders
 
-	// Get buffer size information
-	int bufferWidth;
-	int bufferHeight;
-
-	glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
-
-	// Set context for GLEW to use
-	glfwMakeContextCurrent(mainWindow); // Set the current context to the created window
-
-	// Initialize GLEW
-	if (glewInit() != GLEW_OK)
-	{
-		printf("GLEW initialization failed!\n");
-		// get rid of the window
-		glfwDestroyWindow(mainWindow); // destroy window if GLEW initialization fails
-		glfwTerminate();
-		return 1;
-	}
-
-	glEnable(GL_DEPTH_TEST); // Enable depth testing
-
-	glViewport(0, 0, bufferWidth, bufferHeight); // Set the viewport size (0,0) to the size of the window
-	
-	CreateTriangle(); // Create triangle
-	CompileShaders(); // Compile and link shaders
-
-	const float fovY = glm::radians(30.0f);  // FOV in Y direction
-	const GLfloat aspectRatio = (GLfloat) (bufferWidth /bufferHeight); // width / height
+	const float fovY = glm::radians(60.0f);  // FOV in Y direction
+	const GLfloat aspectRatio = (GLfloat) (mainWindow.getBufferWidth() / mainWindow.getBufferHeight()); // width / height
 	const float zNear = 0.1f;  // Near clipping plane
 	const float zFar = 100.0f; // Far clipping plane
 
 	const float xLoc = 0.0f;
 	const float yLoc = 0.0f;
 	const float zLoc = -2.5f;
+
+	GLuint uniformModel = 0;
+	GLuint uniformProjection = 0;
 
 	glm::mat4 projection = glm::perspective(fovY, aspectRatio, zNear, zFar); // Create a perspective projection matrix
 
@@ -271,7 +118,7 @@ int main()
 	GLboolean TO_TRANSPOSE = GL_FALSE; // Whether to transpose the matrix as the values are loaded into the uniform variable
 
 	// Loop until window closed
-	while (!glfwWindowShouldClose(mainWindow))
+	while (!mainWindow.getShouldClose())
 	{
 		// Get and handle user input events
 		glfwPollEvents(); // Poll events from user & process them
@@ -318,29 +165,36 @@ int main()
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color to red
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glUseProgram(shader);
+		shaderList[0]->UseShader();
+		uniformModel = shaderList[0]->GetModelLocation();
+		uniformProjection = shaderList[0]->GetProjectionLocation();
 
 		glm::mat4 model{ 1.0f }; // Create identity matrix by default
 
 		model = glm::translate(model, glm::vec3{ xLoc + triOffset, yLoc + triOffset, zLoc + triOffset });
-		model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 1.0f, 1.0f, 1.0f });
+		// model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 1.0f, 1.0f, 1.0f });
 		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
 
 		// update uniform value by setting to triOffset
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
 		glUniformMatrix4fv(uniformProjection, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(projection));
 
-		glBindVertexArray(VAO); // Bind the VAO (the t	riangle)
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO); // Bind the IBO
+		meshList[0]->RenderMesh(); // Render the triangle
 
-		glDrawElements(GL_TRIANGLES, TRIANGLE_VERTEX_COUNT * POSITION_COMPONENTS, GL_UNSIGNED_INT, 0); // Draw the triangle
+		model = glm::mat4(1.0f);   // Reset to identity matrix
 
-		glBindVertexArray(0); // Unbind the VAO
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind the IBO
+		model = glm::translate(model, glm::vec3{ -triOffset, 1.0f, -2.5f });
+		// model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 1.0f, 1.0f, 1.0f });
+		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
+
+		// update uniform value by setting to triOffset
+		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
+
+		meshList[1]->RenderMesh(); // Render the triangle
 
 		glUseProgram(0);
 
-		glfwSwapBuffers(mainWindow); // Swap the front and back buffers
+		mainWindow.swapBuffers(); // Swap the front and back buffers
 	}	
 
 	// Cleanup
