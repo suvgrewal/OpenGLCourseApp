@@ -18,30 +18,13 @@
 #include "Mesh.h"
 #include "Shader.h"
 
-// Window dimensions
-const GLint WIDTH = 800;
-const GLint HEIGHT = 600;
-
-GLWindow mainWindow;
-
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
-
-enum class Direction { LEFT, RIGHT };
-
-Direction direction = Direction::RIGHT;
-float triOffset = 0.0f;
-float triMaxOffset = 0.5f;
-float triIncrement = 0.005f;
 
 const int POSITION_COMPONENTS = 4;
 const int TRIANGLE_VERTEX_COUNT = 3;
 float currAngle = 0.0f;
 const float degreeToRotateIncrement = 0.25f;
-
-enum class SizeDirection { INCREASING, DECREASING };
-
-SizeDirection sizeDirection = SizeDirection::INCREASING;
 
 float currSize = 0.4f;
 float maxSize = 0.8f;
@@ -88,7 +71,11 @@ void CreateShaders()
 
 int main()
 {
-	mainWindow = GLWindow(WIDTH, HEIGHT);
+	// Window dimensions
+	const GLint WIDTH = 800;
+	const GLint HEIGHT = 600;
+
+	GLWindow mainWindow = GLWindow(WIDTH, HEIGHT);
 
 	mainWindow.Initialize();
 
@@ -115,51 +102,13 @@ int main()
 	const int count = 3;
 
 	const GLint MATRIX_COUNT = 1;
-	GLboolean TO_TRANSPOSE = GL_FALSE; // Whether to transpose the matrix as the values are loaded into the uniform variable
+	GLboolean TO_TRANSPOSE = GL_FALSE; // Whether to transpose matrix
 
 	// Loop until window closed
 	while (!mainWindow.getShouldClose())
 	{
 		// Get and handle user input events
 		glfwPollEvents(); // Poll events from user & process them
-
-		if (direction == Direction::RIGHT)
-		{
-			triOffset += triIncrement;
-		}
-		else
-		{
-			triOffset -= triIncrement;
-		}
-
-		if (abs(triOffset) >= triMaxOffset)
-		{
-			// swap directions
-			direction = (direction == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
-		}
-
-		currAngle += degreeToRotateIncrement;
-		if (currAngle >= 360.0f)
-		{
-			currAngle -= 360.0f;
-		}
-
-		if (changeSize)
-		{
-			if (sizeDirection == SizeDirection::INCREASING)
-			{
-				currSize += sizeIncrement;
-			}
-			else
-			{
-				currSize -= sizeIncrement;
-			}
-
-			if (currSize >= maxSize || currSize <= minSize)
-			{
-				sizeDirection = (sizeDirection == SizeDirection::INCREASING) ? (sizeDirection = SizeDirection::DECREASING) : (SizeDirection::INCREASING);
-			}
-		}
 
 		// Clear window
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color to red
@@ -171,25 +120,18 @@ int main()
 
 		glm::mat4 model{ 1.0f }; // Create identity matrix by default
 
-		model = glm::translate(model, glm::vec3{ xLoc + triOffset, yLoc + triOffset, zLoc + triOffset });
+		model = glm::translate(model, glm::vec3{ 0.0f, 0.0f, -2.5f });
 		// model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 1.0f, 1.0f, 1.0f });
 		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
-
-		// update uniform value by setting to triOffset
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
 		glUniformMatrix4fv(uniformProjection, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(projection));
-
 		meshList[0]->RenderMesh(); // Render the triangle
 
 		model = glm::mat4(1.0f);   // Reset to identity matrix
-
-		model = glm::translate(model, glm::vec3{ -triOffset, 1.0f, -2.5f });
+		model = glm::translate(model, glm::vec3{ 0.0f, 1.0f, -2.5f });
 		// model = glm::rotate(model, glm::radians(currAngle), glm::vec3{ 1.0f, 1.0f, 1.0f });
 		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
-
-		// update uniform value by setting to triOffset
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
-
 		meshList[1]->RenderMesh(); // Render the triangle
 
 		glUseProgram(0);
