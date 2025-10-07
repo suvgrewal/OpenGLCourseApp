@@ -83,28 +83,26 @@ void Shader::CompileShader(const char* vertexCode, const char* fragmentCode)
 		return;
 	}
 	uniformModel = glGetUniformLocation(shaderID, "model");           // Get the location of the uniform variable "model" in the shader program
+	uniformView = glGetUniformLocation(shaderID, "view");             // Get the location of the uniform variable "view" in the shader program
 	uniformProjection = glGetUniformLocation(shaderID, "projection"); // Get the location of the uniform variable "projection" in the shader program
-	// uniformView = glGetUniformLocation(shaderID, "view");             // Get the location of the uniform variable "view" in the shader program
 }
 
 // Getters
-GLuint Shader::GetProjectionLocation()
-{
-	return uniformProjection;
-}
-
 GLuint Shader::GetModelLocation()
 {
 	return uniformModel;
 }
 
-/*
+
 GLuint Shader::GetViewLocation()
 {
-	// return uniformView;
-	return 0;
+	 return uniformView;
 }
-*/
+
+GLuint Shader::GetProjectionLocation()
+{
+	return uniformProjection;
+}
 
 // Shader Usage
 void Shader::UseShader()

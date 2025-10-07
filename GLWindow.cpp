@@ -1,5 +1,8 @@
 #include "GLWindow.h"
 
+// global variable to toggle verbose output for key and mouse events
+const bool verbose = false;
+
 GLWindow::GLWindow() : GLWindow(800, 600)
 {
 }
@@ -19,6 +22,8 @@ GLWindow::GLWindow(GLint windowWidth, GLint windowHeight)
 	{
 		key_states[i] = false;
 	}
+
+	mouseFirstMoved = true;
 
 	mainWindow = nullptr;
 }
@@ -113,12 +118,18 @@ void GLWindow::handleKeys(GLFWwindow* window, int key, int code, int action, int
 		if (action == GLFW_PRESS)
 		{
 			theWindow->key_states[key] = true;
-			printf("Pressed: %d\n", key);
+			if (verbose)
+			{
+				printf("Pressed: %d\n", key);
+			}
 		}
 		else if (action == GLFW_RELEASE)
 		{
 			theWindow->key_states[key] = false;
-			printf("Released: %d\n", key);
+			if (verbose)
+			{
+				printf("Released: %d\n", key);
+			}
 		}
 	}
 
@@ -139,7 +150,10 @@ void GLWindow::handleMouse(GLFWwindow* window, double xPos, double yPos)
 	theWindow->yChange = theWindow->lastY - (GLfloat) yPos; // change in y
 	theWindow->lastX = (GLfloat) xPos; // set lastX to current x position
 	theWindow->lastY = (GLfloat) yPos; // set lastY to current y position
-	printf("x: %f, y: %f\n", theWindow->xChange, theWindow->yChange);
+	if (verbose)
+	{
+		printf("x: %f, y: %f\n", theWindow->xChange, theWindow->yChange);
+	}
 }
 
 GLWindow::~GLWindow()
