@@ -12,7 +12,9 @@ void Mesh::CreateMesh(const GLfloat* vertices, const unsigned int* indices, unsi
 {
 	constexpr GLsizei NUM_BUFFERS = 1;
 	constexpr GLuint POSITION_ATTRIB_INDEX = 0;
+	constexpr GLuint TEXTURE_COORDINATE_INDEX = 1;
 	constexpr GLint POSITION_COMPONENTS = 3;
+	constexpr GLint UV_COMPONENTS = 2;
 
 	indexCount = numOfIndices;
 
@@ -29,11 +31,14 @@ void Mesh::CreateMesh(const GLfloat* vertices, const unsigned int* indices, unsi
 
 	GLenum type = GL_FLOAT;
 	GLboolean isNormalized = GL_FALSE;
-	GLsizei stride = 0;
+	GLsizei stride = sizeof(vertices[0]) * 5;
 	void* offset = (void*) 0;
+	void* offsetTextureCoord = (void*)(sizeof(vertices[0]) * 3);
 
 	glVertexAttribPointer(POSITION_ATTRIB_INDEX, POSITION_COMPONENTS, type, isNormalized, stride, offset);
 	glEnableVertexAttribArray(POSITION_ATTRIB_INDEX);
+	glVertexAttribPointer(TEXTURE_COORDINATE_INDEX, UV_COMPONENTS, type, isNormalized, stride, offsetTextureCoord);
+	glEnableVertexAttribArray(TEXTURE_COORDINATE_INDEX);
 
 	glBindVertexArray(0);
 

@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <stdio.h>
 #include <string.h>
 #include <cmath>
@@ -18,20 +20,23 @@
 
 #include <Windows.h>
 #include <Xinput.h>
-#pragma comment(lib, "XInput.lib")
+#pragma comment(lib, "XInput.lib") 
 
 #include "GLWindow.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Texture.h"
+
+
 
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
 
-const int POSITION_COMPONENTS = 4;
-const int TRIANGLE_VERTEX_COUNT = 3;
-
-const bool verbose = true;
+constexpr int POSITION_COMPONENTS = 4;
+constexpr int TRIANGLE_VERTEX_COUNT = 3;
+constexpr int NUM_UV_COMPONENTS = 2;
+constexpr bool verbose = false;
 
 // Vertex Shader
 static const char* vShader = "Shaders/shader.vert";
@@ -47,19 +52,22 @@ void CreateObjects()
 		0, 1, 2
 	};
 
-	GLfloat vertices[TRIANGLE_VERTEX_COUNT * POSITION_COMPONENTS] = {
-		-1.0f, -1.0f, 0.0f, // Bottom left
-		0.0f, -1.0f, 1.0f,  // Top right in background
-		1.0f, -1.0f, 0.0f,  // Bottom right
-		0.0f,  1.0f, 0.0f   // Top middle
+	GLfloat vertices[POSITION_COMPONENTS * (TRIANGLE_VERTEX_COUNT + NUM_UV_COMPONENTS)] = {
+	//  X      Y      Z     U     V
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // Bottom left
+		0.0f,  -1.0f, 1.0f, 0.5f, 0.0f,  // Top right in background
+		1.0f,  -1.0f, 0.0f, 1.0f, 0.0f,  // Bottom right
+		0.0f,  1.0f,  0.0f, 0.5f, 1.0f   // Top middle
 	};
 
 	Mesh* obj1 = new Mesh();
-	obj1->CreateMesh(vertices, indices, sizeof(vertices) / sizeof(vertices[0]), sizeof(indices) / sizeof(indices[0]));
+	const int numOfVertices = sizeof(vertices) / sizeof(vertices[0]);
+	const int numOfIndices = sizeof(indices) / sizeof(indices[0]);
+	obj1->CreateMesh(vertices, indices, numOfVertices, numOfIndices);
 	meshList.push_back(obj1);
 
 	Mesh* obj2 = new Mesh();
-	obj2->CreateMesh(vertices, indices, sizeof(vertices) / sizeof(vertices[0]), sizeof(indices) / sizeof(indices[0]));
+	obj2->CreateMesh(vertices, indices, numOfVertices, numOfIndices);
 	meshList.push_back(obj2);
 }
 
@@ -69,6 +77,27 @@ void CreateShaders()
 	shader1->CreateFromFiles(vShader, fShader);
 	shaderList.push_back(shader1);
 }
+
+char getInputDeviceTypeConnected()
+{
+	const int controllerIndex = 0;
+	const int dwFlags = 0;
+	XINPUT_CAPABILITIES pCapabilities;
+
+	// Autodetect if XInput device connected
+	if (XInputGetCapabilities(controllerIndex, dwFlags, &pCapabilities) == ERROR_SUCCESS)
+	{
+		if (verbose)
+		{
+			printf("XInput Device Autodetected");
+		}
+
+		return 'x';
+	}
+
+	return 'k';
+}
+
 
 inline bool isButtonPressed(const XINPUT_STATE& state, WORD button)
 {
@@ -152,35 +181,7 @@ void ProcessXInput(Camera& camera, float deltaTime)
 int main()
 {
 	// Choose input device
-	char inputDevice = 'k'; // initialize to mouse and keyboard
-	bool inputDeviceIsValid = false;
-
-	while (!inputDeviceIsValid)
-	{
-		printf("Enter XInput or Keyboard & Mouse (X/K): ");
-		scanf_s(" %c", &inputDevice); // space before %c skips leftover newlines
-
-		switch (std::tolower(inputDevice))
-		{
-		case 'x':
-		{
-			printf("XInput selected\n");
-			inputDeviceIsValid = true;
-			break;
-		}
-		case 'k':
-		{
-			printf("Keyboard & Mouse selected\n");
-			inputDeviceIsValid = true;
-			break;
-		}
-		default:
-		{
-			printf("Invalid input. Please enter 'X' for XInput or 'K' for Keyboard & Mouse.\n");
-			break;
-		}
-		}
-	}
+	char inputDevice = getInputDeviceTypeConnected();
 
 	// Window dimensions
 	const GLint WIDTH = 800;
@@ -212,8 +213,17 @@ int main()
 	GLfloat startYaw = -90.0f;
 	GLfloat startPitch = 0.0f;
 	GLfloat movementSpeed = 10.0f;
-	GLfloat cameraSensitivity = 10.0f;
+	GLfloat cameraSensitivity = 20.0f;
 	Camera camera = Camera{ startPosition, startUp, startYaw, startPitch, movementSpeed, cameraSensitivity };
+
+	// TODO: put in mesh or object holding mesh for proper OOP
+	std::string bricksFilename = "textures/brick.png";
+	std::string dirtFilename = "textures/dirt.png";
+	Texture brickTexture = Texture(bricksFilename.c_str());
+	Texture dirtTexture = Texture(dirtFilename.c_str());
+
+	brickTexture.LoadTexture();
+	dirtTexture.LoadTexture();
 
 	GLuint uniformModel = 0;
 	GLuint uniformView = 0;
@@ -265,12 +275,14 @@ int main()
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
 		glUniformMatrix4fv(uniformView, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(camera.calculateViewMatrix()));
 		glUniformMatrix4fv(uniformProjection, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(projection));
+		brickTexture.UseTexture();
 		meshList[0]->RenderMesh(); // Render the triangle
 
 		model = glm::mat4(1.0f);   // Reset to identity matrix
 		model = glm::translate(model, glm::vec3{ 0.0f, 1.0f, -2.5f });
 		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
+		dirtTexture.UseTexture();
 		meshList[1]->RenderMesh(); // Render the triangle
 
 		glUseProgram(0);
