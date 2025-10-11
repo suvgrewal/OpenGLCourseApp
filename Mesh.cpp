@@ -1,11 +1,7 @@
 #include "Mesh.h"
 
-Mesh::Mesh()
+Mesh::Mesh() : VAO(0), VBO(0), IBO(0), indexCount(0)
 {
-	VAO = 0;
-	VBO = 0;
-	IBO = 0;
-	indexCount = 0;
 }
 
 void Mesh::CreateMesh(const GLfloat* vertices, const unsigned int* indices, unsigned int numOfVertices, unsigned int numOfIndices)
@@ -13,8 +9,10 @@ void Mesh::CreateMesh(const GLfloat* vertices, const unsigned int* indices, unsi
 	constexpr GLsizei NUM_BUFFERS = 1;
 	constexpr GLuint POSITION_ATTRIB_INDEX = 0;
 	constexpr GLuint TEXTURE_COORDINATE_INDEX = 1;
-	constexpr GLint POSITION_COMPONENTS = 3;
-	constexpr GLint UV_COMPONENTS = 2;
+	constexpr GLint NUM_POSITION_COMPONENTS = 3;
+	constexpr GLint NUM_UV_COMPONENTS = 2;
+	constexpr GLint DIFFUSE_LIGHT_INDEX = 2;
+	constexpr GLint NUM_NORMAL_COMPONENTS = 3;
 
 	indexCount = numOfIndices;
 
@@ -26,19 +24,22 @@ void Mesh::CreateMesh(const GLfloat* vertices, const unsigned int* indices, unsi
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * numOfIndices, indices, GL_STATIC_DRAW);
 
 	glGenBuffers(NUM_BUFFERS, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO); 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * numOfVertices, vertices, GL_STATIC_DRAW);
 
 	GLenum type = GL_FLOAT;
 	GLboolean isNormalized = GL_FALSE;
-	GLsizei stride = sizeof(vertices[0]) * 5;
+	GLsizei stride = sizeof(vertices[0]) * (NUM_POSITION_COMPONENTS + NUM_UV_COMPONENTS + NUM_NORMAL_COMPONENTS);
 	void* offset = (void*) 0;
-	void* offsetTextureCoord = (void*)(sizeof(vertices[0]) * 3);
-
-	glVertexAttribPointer(POSITION_ATTRIB_INDEX, POSITION_COMPONENTS, type, isNormalized, stride, offset);
+	void* offsetTextureCoord = (void*)(sizeof(vertices[0]) * NUM_POSITION_COMPONENTS);
+	void* offsetNormalData = (void*)(sizeof(vertices[0]) * (NUM_POSITION_COMPONENTS + NUM_UV_COMPONENTS));
+	
+	glVertexAttribPointer(POSITION_ATTRIB_INDEX, NUM_POSITION_COMPONENTS, type, isNormalized, stride, offset);
 	glEnableVertexAttribArray(POSITION_ATTRIB_INDEX);
-	glVertexAttribPointer(TEXTURE_COORDINATE_INDEX, UV_COMPONENTS, type, isNormalized, stride, offsetTextureCoord);
+	glVertexAttribPointer(TEXTURE_COORDINATE_INDEX, NUM_UV_COMPONENTS, type, isNormalized, stride, offsetTextureCoord);
 	glEnableVertexAttribArray(TEXTURE_COORDINATE_INDEX);
+	glVertexAttribPointer(DIFFUSE_LIGHT_INDEX, NUM_NORMAL_COMPONENTS, type, isNormalized, stride, offsetNormalData);
+	glEnableVertexAttribArray(DIFFUSE_LIGHT_INDEX);
 
 	glBindVertexArray(0);
 

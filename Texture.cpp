@@ -1,12 +1,7 @@
 #include "Texture.h"
 
-Texture::Texture()
+Texture::Texture() : textureID(0), width(0), height(0), bitDepth(0), fileLocation(nullptr)
 {
-	textureID = 0;
-	width = 0;
-	height = 0;
-	bitDepth = 0;
-	fileLocation = nullptr;
 }
 
 Texture::Texture(const char* fileLoc)

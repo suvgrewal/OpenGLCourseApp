@@ -3,24 +3,24 @@
   "WorkspaceRootPath": "C:\\Projects\\OpenGLCourseApp\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\Texture.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:Texture.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\Mesh.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:Mesh.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\Texture.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:Texture.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\Shader.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:Shader.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\Mesh.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:Mesh.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|C:\\Projects\\OpenGLCourseApp\\Light.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{61964B11-FEAF-4CB3-9BFB-7C08952CDB95}|OpenGLCourseApp.vcxproj|solutionrelative:Light.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -30,23 +30,50 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "Mesh.cpp",
               "DocumentMoniker": "C:\\Projects\\OpenGLCourseApp\\Mesh.cpp",
               "RelativeDocumentMoniker": "Mesh.cpp",
               "ToolTip": "C:\\Projects\\OpenGLCourseApp\\Mesh.cpp",
               "RelativeToolTip": "Mesh.cpp",
-              "ViewState": "AgIAABoAAAAAAAAAAAAMwCgAAAAZAAAAAAAAAA==",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAABsAAABNAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-10-08T22:08:52.707Z"
+              "WhenOpened": "2025-10-11T03:09:07.004Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Shader.cpp",
+              "DocumentMoniker": "C:\\Projects\\OpenGLCourseApp\\Shader.cpp",
+              "RelativeDocumentMoniker": "Shader.cpp",
+              "ToolTip": "C:\\Projects\\OpenGLCourseApp\\Shader.cpp",
+              "RelativeToolTip": "Shader.cpp",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAMwCwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-10-11T02:56:53.742Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
+              "Title": "Light.h",
+              "DocumentMoniker": "C:\\Projects\\OpenGLCourseApp\\Light.h",
+              "RelativeDocumentMoniker": "Light.h",
+              "ToolTip": "C:\\Projects\\OpenGLCourseApp\\Light.h",
+              "RelativeToolTip": "Light.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-10-10T01:17:55.688Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "Mesh.h",
               "DocumentMoniker": "C:\\Projects\\OpenGLCourseApp\\Mesh.h",
               "RelativeDocumentMoniker": "Mesh.h",
@@ -54,42 +81,18 @@
               "RelativeToolTip": "Mesh.h",
               "ViewState": "AgIAAAMAAAAAAAAAAAAAAAcAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-10-08T22:08:48.667Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Texture.cpp",
-              "DocumentMoniker": "C:\\Projects\\OpenGLCourseApp\\Texture.cpp",
-              "RelativeDocumentMoniker": "Texture.cpp",
-              "ToolTip": "C:\\Projects\\OpenGLCourseApp\\Texture.cpp",
-              "RelativeToolTip": "Texture.cpp",
-              "ViewState": "AgIAABUAAAAAAAAAAAAMwCsAAAAoAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-10-08T03:05:00.74Z",
+              "WhenOpened": "2025-10-08T22:08:48.667Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Texture.h",
-              "DocumentMoniker": "C:\\Projects\\OpenGLCourseApp\\Texture.h",
-              "RelativeDocumentMoniker": "Texture.h",
-              "ToolTip": "C:\\Projects\\OpenGLCourseApp\\Texture.h",
-              "RelativeToolTip": "Texture.h",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-10-08T03:04:57.661Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "main.cpp",
               "DocumentMoniker": "C:\\Projects\\OpenGLCourseApp\\main.cpp",
               "RelativeDocumentMoniker": "main.cpp",
               "ToolTip": "C:\\Projects\\OpenGLCourseApp\\main.cpp",
               "RelativeToolTip": "main.cpp",
-              "ViewState": "AgIAAMIAAAAAAAAAAAAMwNcAAAAfAAAAAAAAAA==",
+              "ViewState": "AgIAAPIAAAAAAAAAAAAcwBUBAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-09-27T21:32:16.06Z",
               "EditorCaption": ""

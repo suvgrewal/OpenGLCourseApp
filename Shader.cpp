@@ -1,11 +1,7 @@
 #include "Shader.h"
 
-Shader::Shader()
+Shader::Shader() : shaderID(0), uniformModel(0), uniformProjection(0), uniformView(0)
 {
-	shaderID = 0;
-	uniformModel = 0;
-	uniformProjection = 0;
-	// uniformView = 0;
 }
 
 void Shader::CreateFromString(const char* vertexCode, const char* fragmentCode)
@@ -76,15 +72,21 @@ void Shader::CompileShader(const char* vertexCode, const char* fragmentCode)
 	}
 	glValidateProgram(shaderID); // Validate the shader program
 	glGetProgramiv(shaderID, GL_VALIDATE_STATUS, &result); // Get validation status
+
 	if (!result)
 	{
 		glGetProgramInfoLog(shaderID, logLength, infoLogLength, eLog);
 		printf("Error validating program: '%s'\n", eLog);
 		return;
 	}
-	uniformModel = glGetUniformLocation(shaderID, "model");           // Get the location of the uniform variable "model" in the shader program
-	uniformView = glGetUniformLocation(shaderID, "view");             // Get the location of the uniform variable "view" in the shader program
-	uniformProjection = glGetUniformLocation(shaderID, "projection"); // Get the location of the uniform variable "projection" in the shader program
+
+	uniformModel = glGetUniformLocation(shaderID, "model");
+	uniformView = glGetUniformLocation(shaderID, "view");
+	uniformProjection = glGetUniformLocation(shaderID, "projection");
+	uniformAmbientColor = glGetUniformLocation(shaderID, "directionalLight.color");
+	uniformAmbientIntensity = glGetUniformLocation(shaderID, "directionalLight.ambientIntensity");
+	uniformDirection = glGetUniformLocation(shaderID, "directionalLight.direction");
+	uniformDiffuseIntensity = glGetUniformLocation(shaderID, "directionalLight.diffuseIntensity");
 }
 
 // Getters
@@ -102,6 +104,26 @@ GLuint Shader::GetViewLocation()
 GLuint Shader::GetProjectionLocation()
 {
 	return uniformProjection;
+}
+
+GLuint Shader::GetAmbientColorLocation()
+{
+	return uniformAmbientColor;
+}
+
+GLuint Shader::GetAmbientIntensityLocation()
+{
+	return uniformAmbientIntensity;
+}
+
+GLuint Shader::GetDirectionLocation()
+{
+	return uniformDirection;
+}
+
+GLuint Shader::GetDiffuseIntensityLocation()
+{
+	return uniformDiffuseIntensity;
 }
 
 // Shader Usage

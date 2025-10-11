@@ -27,8 +27,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Texture.h"
-
-
+#include "Light.h"
 
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
@@ -36,6 +35,7 @@ std::vector<Shader*> shaderList;
 constexpr int POSITION_COMPONENTS = 4;
 constexpr int TRIANGLE_VERTEX_COUNT = 3;
 constexpr int NUM_UV_COMPONENTS = 2;
+constexpr int NUM_NORMAL_COMPONENTS = 3;
 constexpr bool verbose = false;
 
 // Vertex Shader
@@ -43,22 +43,74 @@ static const char* vShader = "Shaders/shader.vert";
 
 static const char* fShader = "Shaders/shader.frag";
 
+void calcAverageNormals(unsigned int* indices, unsigned int indiceCount, float* vertices, unsigned int verticeCount, 
+	                    unsigned int vertexLength, unsigned int normalOffset)
+{
+	// obtain normal vectors
+	for (size_t i = 0; i < indiceCount; i += TRIANGLE_VERTEX_COUNT)
+	{
+		unsigned int in0 = indices[i] * vertexLength;
+		unsigned int in1 = indices[i + 1] * vertexLength;
+		unsigned int in2 = indices[i + 2] * vertexLength;
+
+		glm::vec3 v1(vertices[in1] - vertices[in0], vertices[in1 + 1] - vertices[in0 + 1], vertices[in1 + 2] - vertices[in0 + 2]);
+		glm::vec3 v2(vertices[in2] - vertices[in0], vertices[in2 + 1] - vertices[in0 + 1], vertices[in2 + 2] - vertices[in0 + 2]);
+		glm::vec3 normal = glm::cross(v1, v2);
+		normal = glm::normalize(normal);
+
+		in0 += normalOffset;
+		in1 += normalOffset;
+		in2 += normalOffset;
+
+		vertices[in0]     += normal.x;
+		vertices[in0 + 1] += normal.y;
+		vertices[in0 + 2] += normal.z;
+
+		vertices[in1]     += normal.x;
+		vertices[in1 + 1] += normal.y;
+		vertices[in1 + 2] += normal.z;
+
+		vertices[in2]     += normal.x;
+		vertices[in2 + 1] += normal.y;
+		vertices[in2 + 2] += normal.z;
+	}
+
+	// per row normalized normal vectors
+	for (size_t i = 0; i < verticeCount / vertexLength; i++)
+	{
+		unsigned int normalOffsetPerVertex = i * vertexLength + normalOffset;
+		glm::vec3 vec(vertices[normalOffsetPerVertex], vertices[normalOffsetPerVertex + 1], vertices[normalOffsetPerVertex + 2]);
+		vec = glm::normalize(vec);
+
+		vertices[normalOffsetPerVertex]     = vec.x;
+		vertices[normalOffsetPerVertex + 1] = vec.y;
+		vertices[normalOffsetPerVertex + 2] = vec.z;
+	}
+}
+
 void CreateObjects()
 {
-	unsigned int indices[] = {
+	const int indiceCount = TRIANGLE_VERTEX_COUNT * POSITION_COMPONENTS;
+	const int verticeCount = POSITION_COMPONENTS * (TRIANGLE_VERTEX_COUNT + NUM_UV_COMPONENTS + NUM_NORMAL_COMPONENTS);
+	
+	unsigned int indices[indiceCount] = {
 		0, 3, 1,
 		1, 3, 2,
 		2, 3, 0,
 		0, 1, 2
 	};
 
-	GLfloat vertices[POSITION_COMPONENTS * (TRIANGLE_VERTEX_COUNT + NUM_UV_COMPONENTS)] = {
-	//  X      Y      Z     U     V
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // Bottom left
-		0.0f,  -1.0f, 1.0f, 0.5f, 0.0f,  // Top right in background
-		1.0f,  -1.0f, 0.0f, 1.0f, 0.0f,  // Bottom right
-		0.0f,  1.0f,  0.0f, 0.5f, 1.0f   // Top middle
-	};
+	GLfloat vertices[verticeCount] = {
+	//  X      Y      Z     U     V     Nx    Ny    Nz
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Bottom left
+		0.0f,  -1.0f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, // Top right in background
+		1.0f,  -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Bottom right
+		0.0f,  1.0f,  0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f  // Top middle
+	}; 
+	
+	const int numVerticeColumns = verticeCount / POSITION_COMPONENTS;
+	const int normalOffset = TRIANGLE_VERTEX_COUNT + NUM_UV_COMPONENTS;
+	calcAverageNormals(indices, indiceCount, vertices, verticeCount, numVerticeColumns, normalOffset);
 
 	Mesh* obj1 = new Mesh();
 	const int numOfVertices = sizeof(vertices) / sizeof(vertices[0]);
@@ -225,13 +277,26 @@ int main()
 	brickTexture.LoadTexture();
 	dirtTexture.LoadTexture();
 
+	GLfloat redChannel = 1.0f;
+	GLfloat blueChannel = 1.0f;
+	GLfloat greenChannel = 1.0f;
+	GLfloat ambientIntensity = 0.2f;
+	GLfloat xDirection =  2.0f;   // + right
+	GLfloat yDirection = -1.0f;   // + up
+	GLfloat zDirection = -2.0f;   // + to camera/viewer
+	GLfloat diffuseIntensity = 1.0f;
+	Light mainLight = Light(redChannel, greenChannel, blueChannel, ambientIntensity, 
+		                    xDirection, yDirection, zDirection, diffuseIntensity);
+
 	GLuint uniformModel = 0;
 	GLuint uniformView = 0;
 	GLuint uniformProjection = 0;
+	GLuint uniformAmbientColor = 0;
+	GLuint uniformAmbientIntensity = 0;
+	GLuint uniformDirection = 0;
+	GLuint uniformDiffuseIntensity = 0;
 
 	glm::mat4 projection = glm::perspective(fovY, aspectRatio, zNear, zFar); // Create a perspective projection matrix
-
-	//glm::mat4 projection = glm::perspective(glm::radians(45.0f), (GLfloat)bufferWidth / (GLfloat)bufferHeight, 0.1f, 100.0f);
 
 	const int first = 0;
 	const int count = 3;
@@ -267,6 +332,15 @@ int main()
 		uniformModel = shaderList[0]->GetModelLocation();
 		uniformView = shaderList[0]->GetViewLocation();
 		uniformProjection = shaderList[0]->GetProjectionLocation();
+		uniformAmbientColor = shaderList[0]->GetAmbientColorLocation();
+		uniformAmbientIntensity = shaderList[0]->GetAmbientIntensityLocation();
+		uniformDiffuseIntensity = shaderList[0]->GetDiffuseIntensityLocation();
+		uniformDirection = shaderList[0]->GetDirectionLocation();
+
+		printf("" + (int)uniformDiffuseIntensity);
+		printf("" + (int)uniformDirection);
+
+		mainLight.UseLight(uniformAmbientIntensity, uniformAmbientColor, uniformDiffuseIntensity, uniformDirection);
 
 		glm::mat4 model{ 1.0f }; // Create identity matrix by default
 

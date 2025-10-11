@@ -1,10 +1,13 @@
+// Shader.vert
 #version 330
 
-layout (location = 0) in vec3 pos;   // XYZ
-layout (location = 1) in vec2 tex;   // UV
+layout (location = 0) in vec3 pos;  // XYZ
+layout (location = 1) in vec2 tex;  // UV
+layout (location = 2) in vec3 norm; // normal of vertex
 
 out vec4 vColor;
 out vec2 TexCoord0;
+flat out vec3 Normal;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -16,4 +19,6 @@ void main()
     vColor = vec4(clamp(pos, 0.0f, 1.0f), 1.0);
 
     TexCoord0 = tex;
+
+    Normal = mat3(transpose(inverse(model))) * norm;
 }
