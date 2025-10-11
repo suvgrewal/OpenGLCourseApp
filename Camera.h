@@ -16,6 +16,8 @@ public:
 	void keyControl(bool* keys, GLfloat deltaTime);
 	void mouseControl(GLfloat xChange, GLfloat yChange);
 
+	glm::vec3 getCameraPosition() const { return position;  }
+
 	const glm::vec3 getFront() const { return front; }
 	const glm::vec3 getRight() const { return right; }
 	const glm::vec3 getUp() const { return up; }

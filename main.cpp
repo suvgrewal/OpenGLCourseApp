@@ -28,6 +28,7 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Light.h"
+#include "Material.h"
 
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
@@ -101,24 +102,24 @@ void CreateObjects()
 	};
 
 	GLfloat vertices[verticeCount] = {
-	//  X      Y      Z     U     V     Nx    Ny    Nz
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Bottom left
-		0.0f,  -1.0f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, // Top right in background
-		1.0f,  -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Bottom right
-		0.0f,  1.0f,  0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f  // Top middle
+	//  X      Y      Z      U     V     Nx    Ny    Nz
+		-1.0f, -1.0f, -0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Bottom left
+		0.0f,  -1.0f, 1.0f,  0.5f, 0.0f, 0.0f, 0.0f, 0.0f, // Top right in background
+		1.0f,  -1.0f, -0.6f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Bottom right
+		0.0f,  1.0f,  0.0f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f  // Top middle
 	}; 
 	
 	const int numVerticeColumns = verticeCount / POSITION_COMPONENTS;
 	const int normalOffset = TRIANGLE_VERTEX_COUNT + NUM_UV_COMPONENTS;
 	calcAverageNormals(indices, indiceCount, vertices, verticeCount, numVerticeColumns, normalOffset);
 
-	Mesh* obj1 = new Mesh();
+	Mesh* obj1 = new Mesh{ };
 	const int numOfVertices = sizeof(vertices) / sizeof(vertices[0]);
 	const int numOfIndices = sizeof(indices) / sizeof(indices[0]);
 	obj1->CreateMesh(vertices, indices, numOfVertices, numOfIndices);
 	meshList.push_back(obj1);
 
-	Mesh* obj2 = new Mesh();
+	Mesh* obj2 = new Mesh{ };
 	obj2->CreateMesh(vertices, indices, numOfVertices, numOfIndices);
 	meshList.push_back(obj2);
 }
@@ -236,15 +237,15 @@ int main()
 	char inputDevice = getInputDeviceTypeConnected();
 
 	// Window dimensions
-	const GLint WIDTH = 800;
-	const GLint HEIGHT = 600;
+	const GLint WIDTH = 1368;
+	const GLint HEIGHT = 768;
 	GLfloat deltaTime = 0.0f;
 	GLfloat lastTime = 0.0f;
 	GLfloat currentTime = 0.0f;
 
 	float currSize = 0.4f;
 
-	GLWindow mainWindow = GLWindow(WIDTH, HEIGHT);
+	GLWindow mainWindow = GLWindow{ WIDTH, HEIGHT };
 
 	mainWindow.Initialize();
 
@@ -260,8 +261,8 @@ int main()
 	CreateObjects(); // Create triangle
 	CreateShaders(); // Compile and link shaders
 
-	glm::vec3 startPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 startUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 startPosition = glm::vec3{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 startUp = glm::vec3{ 0.0f, 1.0f, 0.0f };
 	GLfloat startYaw = -90.0f;
 	GLfloat startPitch = 0.0f;
 	GLfloat movementSpeed = 10.0f;
@@ -271,11 +272,15 @@ int main()
 	// TODO: put in mesh or object holding mesh for proper OOP
 	std::string bricksFilename = "textures/brick.png";
 	std::string dirtFilename = "textures/dirt.png";
-	Texture brickTexture = Texture(bricksFilename.c_str());
-	Texture dirtTexture = Texture(dirtFilename.c_str());
+
+	Texture brickTexture = Texture{ bricksFilename.c_str() };
+	Texture dirtTexture = Texture{ dirtFilename.c_str() };
 
 	brickTexture.LoadTexture();
 	dirtTexture.LoadTexture();
+
+	Material shinyMaterial{ 1.0f, 32 };
+	Material dullMaterial{ 0.3f, 4 };
 
 	GLfloat redChannel = 1.0f;
 	GLfloat blueChannel = 1.0f;
@@ -284,9 +289,9 @@ int main()
 	GLfloat xDirection =  2.0f;   // + right
 	GLfloat yDirection = -1.0f;   // + up
 	GLfloat zDirection = -2.0f;   // + to camera/viewer
-	GLfloat diffuseIntensity = 1.0f;
-	Light mainLight = Light(redChannel, greenChannel, blueChannel, ambientIntensity, 
-		                    xDirection, yDirection, zDirection, diffuseIntensity);
+	GLfloat diffuseIntensity = 0.1f;
+	Light mainLight = Light{ redChannel, greenChannel, blueChannel, ambientIntensity,
+							xDirection, yDirection, zDirection, diffuseIntensity };
 
 	GLuint uniformModel = 0;
 	GLuint uniformView = 0;
@@ -295,6 +300,9 @@ int main()
 	GLuint uniformAmbientIntensity = 0;
 	GLuint uniformDirection = 0;
 	GLuint uniformDiffuseIntensity = 0;
+	GLuint uniformEyePosition = 0;
+	GLuint uniformShininess = 0;
+	GLuint uniformSpecularIntensity = 0;
 
 	glm::mat4 projection = glm::perspective(fovY, aspectRatio, zNear, zFar); // Create a perspective projection matrix
 
@@ -336,27 +344,32 @@ int main()
 		uniformAmbientIntensity = shaderList[0]->GetAmbientIntensityLocation();
 		uniformDiffuseIntensity = shaderList[0]->GetDiffuseIntensityLocation();
 		uniformDirection = shaderList[0]->GetDirectionLocation();
+		uniformEyePosition = shaderList[0]->GetEyePosition();
+		uniformShininess = shaderList[0]->GetShininessLocation();
+		uniformSpecularIntensity = shaderList[0]->GetSpecularIntensityLocation();
 
 		printf("" + (int)uniformDiffuseIntensity);
 		printf("" + (int)uniformDirection);
 
 		mainLight.UseLight(uniformAmbientIntensity, uniformAmbientColor, uniformDiffuseIntensity, uniformDirection);
 
+		glUniformMatrix4fv(uniformView, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(camera.calculateViewMatrix()));
+		glUniformMatrix4fv(uniformProjection, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(projection));
+		glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
+
 		glm::mat4 model{ 1.0f }; // Create identity matrix by default
 
 		model = glm::translate(model, glm::vec3{ 0.0f, 0.0f, -2.5f });
-		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
-		glUniformMatrix4fv(uniformView, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(camera.calculateViewMatrix()));
-		glUniformMatrix4fv(uniformProjection, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(projection));
 		brickTexture.UseTexture();
+		shinyMaterial.UseMaterial(uniformSpecularIntensity, uniformShininess); // TODO: implemented object oriented function for this
 		meshList[0]->RenderMesh(); // Render the triangle
 
 		model = glm::mat4(1.0f);   // Reset to identity matrix
-		model = glm::translate(model, glm::vec3{ 0.0f, 1.0f, -2.5f });
-		model = glm::scale(model, glm::vec3{ currSize, currSize, 1.0f });
+		model = glm::translate(model, glm::vec3{ 0.0f, 4.0f, -2.5f });
 		glUniformMatrix4fv(uniformModel, MATRIX_COUNT, TO_TRANSPOSE, glm::value_ptr(model));
 		dirtTexture.UseTexture();
+		dullMaterial.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		meshList[1]->RenderMesh(); // Render the triangle
 
 		glUseProgram(0);
